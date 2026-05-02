@@ -1,20 +1,26 @@
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
-import { Link } from "react-router-dom";
 
-export default function CTA() {
-  return (
-    <section className="mx-auto max-w-6xl px-4 py-20">
-      <div className="relative overflow-hidden rounded-2xl border border-border bg-primary px-6 py-14 text-center text-primary-foreground shadow-glow md:px-12">
-        <div className="pointer-events-none absolute -top-20 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-white/15 blur-3xl" />
-        <h2 className="font-display text-3xl md:text-4xl font-bold tracking-tight">Your dream job is one upload away.</h2>
-        <p className="mx-auto mt-3 max-w-xl text-primary-foreground/85">
-          Join the new generation of candidates using TalentOS to outsmart the hiring funnel.
-        </p>
-        <Button asChild size="lg" variant="secondary" className="mt-6 rounded-xl">
-          <Link to="/signup">Create your account <ArrowRight className="ml-2 h-4 w-4" /></Link>
-        </Button>
+export const CTA = () => (
+  <section className="border-t py-24">
+    <div className="container">
+      <div className="surface-card relative overflow-hidden bg-foreground p-12 text-center md:p-20">
+        <div className="absolute inset-0 grid-bg opacity-10" />
+        <div className="relative">
+          <h2 className="mx-auto max-w-2xl text-balance text-4xl font-semibold tracking-tight text-background md:text-5xl">
+            Stop guessing. Start landing offers.
+          </h2>
+          <p className="mx-auto mt-4 max-w-xl text-background/70">
+            Join engineers using TalentOS to break into top companies.
+          </p>
+          <Link to="/signup" className="mt-8 inline-block">
+            <Button size="lg" className="h-12 rounded-full px-7 text-base">
+              Start free <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </Link>
+        </div>
       </div>
-    </section>
-  );
-}
+    </div>
+  </section>
+);

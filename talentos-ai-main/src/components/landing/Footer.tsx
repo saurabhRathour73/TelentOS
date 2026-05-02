@@ -1,24 +1,16 @@
 import { Sparkles } from "lucide-react";
-import { Link } from "react-router-dom";
 
-export default function Footer() {
-  return (
-    <footer className="border-t border-border bg-background">
-      <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-10 text-sm text-muted-foreground md:flex-row md:items-center md:justify-between">
-        <div className="flex items-center gap-2 font-display font-bold text-foreground">
-          <span className="grid h-7 w-7 place-items-center rounded-lg bg-primary text-primary-foreground">
-            <Sparkles className="h-3.5 w-3.5" />
-          </span>
-          TalentOS
+export const Footer = () => (
+  <footer className="border-t py-12">
+    <div className="container flex flex-col items-center justify-between gap-4 md:flex-row">
+      <div className="flex items-center gap-2">
+        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+          <Sparkles className="h-3.5 w-3.5" />
         </div>
-        <div className="flex flex-wrap gap-x-6 gap-y-2">
-          <Link to="/features" className="hover:text-foreground">Features</Link>
-          <Link to="/about" className="hover:text-foreground">About</Link>
-          <Link to="/contact" className="hover:text-foreground">Contact</Link>
-          <Link to="/login" className="hover:text-foreground">Sign in</Link>
-        </div>
-        <div>© {new Date().getFullYear()} TalentOS. Built with AI.</div>
+        <span className="text-sm font-semibold">TalentOS</span>
+        <span className="text-sm text-muted-foreground">— AI Career Intelligence OS</span>
       </div>
-    </footer>
-  );
-}
+      <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} TalentOS. Built for builders.</p>
+    </div>
+  </footer>
+);

@@ -1,118 +1,134 @@
-import PageHeader from "@/components/dashboard/PageHeader";
-import { FileText, Loader2, Upload, CheckCircle2, AlertTriangle, Lightbulb } from "lucide-react";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { useDropzone } from "react-dropzone";
-import { runAnalysis, saveAnalysis } from "@/services/talentService";
+import { motion } from "framer-motion";
 import { toast } from "sonner";
-import ScoreRing from "@/components/dashboard/ScoreRing";
+import { FileText, Upload, Loader2, Sparkles, CheckCircle2, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { PageHeader } from "@/components/dashboard/PageHeader";
+import { analyzeResume } from "@/services/aiService";
+import { useAnalysisStore } from "@/store/analysisStore";
 
-type ResumeResult = {
-  score: number; verdict: string;
-  strengths: string[]; weaknesses: string[];
-  rejection_reasons?: string[]; improvements: string[];
-  detected_skills: string[];
-  sections: { clarity: number; impact: number; structure: number; keywords: number };
+const ScoreRing = ({ score, label }: { score: number; label: string }) => {
+  const c = 2 * Math.PI * 42;
+  const offset = c - (score / 100) * c;
+  const color = score >= 80 ? "text-success" : score >= 60 ? "text-primary" : "text-destructive";
+  return (
+    <div className="flex flex-col items-center">
+      <div className="relative h-32 w-32">
+        <svg className="h-full w-full -rotate-90">
+          <circle cx="64" cy="64" r="42" stroke="currentColor" strokeWidth="8" fill="none" className="text-muted" />
+          <circle cx="64" cy="64" r="42" stroke="currentColor" strokeWidth="8" fill="none"
+            strokeDasharray={c} strokeDashoffset={offset} strokeLinecap="round" className={color}
+            style={{ transition: "stroke-dashoffset 1s ease-out" }} />
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span className={`text-3xl font-semibold ${color}`}>{score}</span>
+          <span className="text-xs text-muted-foreground">/ 100</span>
+        </div>
+      </div>
+      <div className="mt-2 text-sm font-medium">{label}</div>
+    </div>
+  );
 };
 
 export default function ResumeAnalyzer() {
-  const [text, setText] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [result, setResult] = useState<ResumeResult | null>(null);
+  const { resumeText, setResumeText, analysis, setAnalysis, loading, setLoading } = useAnalysisStore();
+  const [targetRole, setTargetRole] = useState("");
 
-  const onDrop = async (files: File[]) => {
-    const f = files[0];
-    if (!f) return;
-    if (f.type === "text/plain") {
-      setText(await f.text());
-      toast.success("Loaded " + f.name);
-    } else {
-      toast.message("PDF/DOCX upload", { description: "Open the file and paste its text into the box for now." });
-    }
-  };
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop, accept: { "text/plain": [".txt"], "application/pdf": [".pdf"], "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"] }, multiple: false });
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    accept: { "text/plain": [".txt"], "text/markdown": [".md"] },
+    multiple: false,
+    onDrop: async (files) => {
+      const f = files[0];
+      if (!f) return;
+      const text = await f.text();
+      setResumeText(text);
+      toast.success(`Loaded ${f.name}`);
+    },
+  });
 
-  const analyze = async () => {
-    if (text.trim().length < 80) return toast.error("Paste at least a paragraph of resume text.");
-    setBusy(true);
+  const onAnalyze = async () => {
+    if (resumeText.trim().length < 50) return toast.error("Paste your resume text (at least 50 chars).");
+    setLoading(true);
+    setAnalysis(null);
     try {
-      const r = await runAnalysis<ResumeResult>("resume", { resumeText: text });
-      setResult(r);
-      await saveAnalysis("resume", r.verdict?.slice(0, 80) || "Resume analysis", { resumeText: text }, r, r.score);
-      toast.success("Analysis complete");
+      const result = await analyzeResume(resumeText, targetRole || undefined);
+      setAnalysis(result);
+      toast.success("Analysis complete!");
     } catch (e: any) {
       toast.error(e.message || "Analysis failed");
-    } finally { setBusy(false); }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="animate-fade-in">
-      <PageHeader icon={FileText} title="Resume Analyzer" subtitle="Paste your resume — get an AI score, strengths, weaknesses and rewrite tips." />
+      <PageHeader title="Resume Analyzer" description="Get an AI-powered ATS score, strengths, weaknesses, and rewrite suggestions." />
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <div className="space-y-3">
-          <div {...getRootProps()} className={`rounded-2xl border-2 border-dashed p-6 text-center transition cursor-pointer ${isDragActive ? "border-primary bg-primary/5" : "border-border bg-card"}`}>
+      <div className="grid gap-6 lg:grid-cols-5">
+        <div className="surface-card space-y-5 p-6 lg:col-span-3">
+          <div {...getRootProps()} className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 text-center transition-colors ${isDragActive ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}>
             <input {...getInputProps()} />
-            <Upload className="mx-auto h-6 w-6 text-muted-foreground" />
-            <div className="mt-2 text-sm font-medium">Drop a .txt file or click to select</div>
-            <div className="text-xs text-muted-foreground">PDF/DOCX: paste the text below</div>
+            <Upload className="mb-2 h-6 w-6 text-muted-foreground" />
+            <div className="text-sm font-medium">{isDragActive ? "Drop your resume here" : "Drop a .txt resume or paste below"}</div>
+            <div className="mt-1 text-xs text-muted-foreground">PDF parsing coming soon — paste text for now.</div>
           </div>
-          <Textarea
-            placeholder="Paste your resume text here..."
-            value={text} onChange={(e) => setText(e.target.value)}
-            className="min-h-[320px] rounded-2xl"
-          />
-          <Button onClick={analyze} disabled={busy} className="w-full rounded-xl shadow-glow">
-            {busy ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Analyzing...</> : "Analyze with AI"}
+
+          <div className="space-y-2">
+            <Label htmlFor="role">Target role (optional)</Label>
+            <Input id="role" value={targetRole} onChange={(e) => setTargetRole(e.target.value)} placeholder="e.g. Senior Frontend Engineer at Stripe" />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="resume">Resume text</Label>
+            <Textarea id="resume" value={resumeText} onChange={(e) => setResumeText(e.target.value)}
+              rows={12} placeholder="Paste your full resume here..." className="font-mono text-xs" />
+          </div>
+
+          <Button onClick={onAnalyze} disabled={loading} size="lg" className="w-full rounded-full">
+            {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Analyzing...</> : <><Sparkles className="mr-2 h-4 w-4" /> Analyze with AI</>}
           </Button>
         </div>
 
-        <div className="space-y-4">
-          {!result && (
-            <div className="grid h-full place-items-center rounded-2xl border border-dashed border-border bg-card p-10 text-center text-sm text-muted-foreground min-h-[320px]">
-              Your AI report will appear here.
+        <div className="lg:col-span-2">
+          {!analysis && !loading && (
+            <div className="surface-card flex h-full min-h-[400px] flex-col items-center justify-center p-8 text-center">
+              <FileText className="mb-3 h-8 w-8 text-muted-foreground" />
+              <h3 className="font-semibold">Your AI report will appear here</h3>
+              <p className="mt-1 text-sm text-muted-foreground">Paste your resume and hit analyze.</p>
             </div>
           )}
-          {result && (
-            <>
-              <div className="rounded-2xl border border-border bg-card p-6 shadow-soft">
-                <div className="flex flex-col items-center gap-3 sm:flex-row sm:gap-6">
-                  <ScoreRing value={result.score} label={result.score >= 80 ? "Great" : result.score >= 60 ? "Good" : "Needs work"} />
-                  <div>
-                    <div className="font-display text-lg font-bold">Overall verdict</div>
-                    <p className="mt-1 text-sm text-muted-foreground">{result.verdict}</p>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {(["clarity","impact","structure","keywords"] as const).map((k) => (
-                        <span key={k} className="rounded-full bg-secondary px-3 py-1 text-xs font-medium">
-                          {k}: <span className="text-primary font-semibold">{result.sections[k]}</span>
-                        </span>
-                      ))}
-                    </div>
-                  </div>
+
+          {loading && (
+            <div className="surface-card flex h-full min-h-[400px] flex-col items-center justify-center p-8">
+              <Loader2 className="mb-3 h-8 w-8 animate-spin text-primary" />
+              <p className="text-sm text-muted-foreground">AI is reviewing your resume...</p>
+            </div>
+          )}
+
+          {analysis && (
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+              <div className="surface-card p-6">
+                <div className="grid grid-cols-3 gap-2">
+                  <ScoreRing score={analysis.overallScore} label="Overall" />
+                  <ScoreRing score={analysis.atsScore} label="ATS" />
+                  <ScoreRing score={analysis.skillsMatch} label="Skills" />
                 </div>
+                <p className="mt-5 text-sm text-muted-foreground">{analysis.summary}</p>
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
-                <Panel icon={CheckCircle2} title="Strengths" tone="success" items={result.strengths} />
-                <Panel icon={AlertTriangle} title="Weaknesses" tone="warning" items={result.weaknesses} />
-              </div>
-
-              <Panel icon={Lightbulb} title="AI improvements" tone="primary" items={result.improvements} />
-
-              {result.rejection_reasons && result.rejection_reasons.length > 0 && (
-                <Panel icon={AlertTriangle} title="Likely rejection reasons" tone="destructive" items={result.rejection_reasons} />
+              <Section title="Strengths" icon={<CheckCircle2 className="h-4 w-4 text-success" />} items={analysis.strengths} />
+              <Section title="Weaknesses" icon={<AlertCircle className="h-4 w-4 text-destructive" />} items={analysis.weaknesses} />
+              <Section title="Missing keywords" items={analysis.missingKeywords} pills />
+              <Section title="Suggestions" icon={<Sparkles className="h-4 w-4 text-primary" />} items={analysis.suggestions} />
+              {analysis.rejectionReasons?.length > 0 && (
+                <Section title="Why you might get rejected" icon={<AlertCircle className="h-4 w-4 text-destructive" />} items={analysis.rejectionReasons} />
               )}
-
-              <div className="rounded-2xl border border-border bg-card p-5 shadow-soft">
-                <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Detected skills</div>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {result.detected_skills.map((s) => (
-                    <span key={s} className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">{s}</span>
-                  ))}
-                </div>
-              </div>
-            </>
+            </motion.div>
           )}
         </div>
       </div>
@@ -120,27 +136,17 @@ export default function ResumeAnalyzer() {
   );
 }
 
-function Panel({ icon: Icon, title, items, tone }: { icon: any; title: string; items: string[]; tone: "success" | "warning" | "primary" | "destructive" }) {
-  const map = {
-    success: "text-success bg-success/10",
-    warning: "text-warning bg-warning/10",
-    primary: "text-primary bg-primary/10",
-    destructive: "text-destructive bg-destructive/10",
-  } as const;
-  return (
-    <div className="rounded-2xl border border-border bg-card p-5 shadow-soft">
-      <div className="flex items-center gap-2">
-        <span className={`grid h-8 w-8 place-items-center rounded-lg ${map[tone]}`}><Icon className="h-4 w-4" /></span>
-        <div className="font-display font-bold">{title}</div>
+const Section = ({ title, icon, items, pills }: { title: string; icon?: React.ReactNode; items: string[]; pills?: boolean }) => (
+  <div className="surface-card p-5">
+    <div className="mb-3 flex items-center gap-2 text-sm font-semibold">{icon}{title}</div>
+    {pills ? (
+      <div className="flex flex-wrap gap-1.5">
+        {items.map((k, i) => <span key={i} className="rounded-full bg-primary-soft px-2.5 py-1 text-xs font-medium text-primary">{k}</span>)}
       </div>
-      <ul className="mt-3 space-y-2 text-sm">
-        {items.map((it, i) => (
-          <li key={i} className="flex gap-2">
-            <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-current opacity-50" />
-            <span>{it}</span>
-          </li>
-        ))}
+    ) : (
+      <ul className="space-y-2 text-sm">
+        {items.map((k, i) => <li key={i} className="flex gap-2"><span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-foreground/30" />{k}</li>)}
       </ul>
-    </div>
-  );
-}
+    )}
+  </div>
+);

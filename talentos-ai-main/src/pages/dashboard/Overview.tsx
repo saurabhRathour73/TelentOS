@@ -1,58 +1,55 @@
-import PageHeader from "@/components/dashboard/PageHeader";
-import { LayoutDashboard, FileText, Gauge, Map, Building2, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { listAnalyses } from "@/services/talentService";
-import { Tables } from "@/integrations/supabase/types";
+import { motion } from "framer-motion";
+import { FileText, Target, TrendingUp, Brain, ArrowRight, Sparkles } from "lucide-react";
+import { PageHeader } from "@/components/dashboard/PageHeader";
+import { useAuth } from "@/hooks/useAuth";
 
-const tiles = [
-  { to: "/dashboard/resume", icon: FileText, title: "Resume Analyzer", body: "Score, strengths, weaknesses, AI rewrites." },
-  { to: "/dashboard/ats", icon: Gauge, title: "ATS Score", body: "Match against any job description." },
-  { to: "/dashboard/role-match", icon: Building2, title: "Dream Role Match", body: "Fit %, salary band, hiring odds." },
-  { to: "/dashboard/roadmap", icon: Map, title: "30/60/90 Roadmap", body: "Personalized plan with skills + projects." },
+const stats = [
+  { label: "Resume Score", value: "—", icon: FileText, hint: "Run analyzer" },
+  { label: "ATS Match", value: "—", icon: Target, hint: "Awaiting upload" },
+  { label: "Hiring Probability", value: "—", icon: TrendingUp, hint: "Pick a target" },
+  { label: "Skill Gap", value: "—", icon: Brain, hint: "Pick a role" },
+];
+
+const quickActions = [
+  { title: "Analyze your resume", desc: "Get ATS score, weaknesses, rewrite suggestions in seconds.", to: "/dashboard/resume", icon: FileText },
+  { title: "Match a dream company", desc: "See your fit % for Google, Amazon, startups, and more.", to: "/dashboard/dream-company", icon: Target },
+  { title: "Generate 90-day roadmap", desc: "AI-personalized plan to land your dream role.", to: "/dashboard/roadmap", icon: Sparkles },
 ];
 
 export default function Overview() {
-  const [items, setItems] = useState<Tables<"analyses">[]>([]);
-  useEffect(() => { listAnalyses().then(setItems).catch(() => {}); }, []);
-
+  const { user } = useAuth();
+  const name = (user?.user_metadata as any)?.full_name?.split(" ")[0] ?? "there";
   return (
     <div className="animate-fade-in">
-      <PageHeader icon={LayoutDashboard} title="Overview" subtitle="Your career intelligence at a glance." />
+      <PageHeader title={`Welcome, ${name}.`} description="Your AI-powered career operating system. Start with the resume analyzer." />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {tiles.map((t) => (
-          <Link key={t.to} to={t.to} className="group rounded-2xl border border-border bg-card p-5 shadow-soft transition hover:-translate-y-1 hover:shadow-elevated">
-            <div className="grid h-10 w-10 place-items-center rounded-xl bg-primary/10 text-primary">
-              <t.icon className="h-5 w-5" />
+        {stats.map((s, i) => (
+          <motion.div key={s.label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} className="surface-card p-5">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">{s.label}</span>
+              <s.icon className="h-4 w-4 text-muted-foreground" />
             </div>
-            <div className="mt-4 flex items-center justify-between">
-              <div className="font-display font-bold">{t.title}</div>
-              <ArrowRight className="h-4 w-4 text-muted-foreground transition group-hover:translate-x-1 group-hover:text-primary" />
-            </div>
-            <p className="mt-1 text-sm text-muted-foreground">{t.body}</p>
-          </Link>
+            <div className="mt-3 text-3xl font-semibold tracking-tight">{s.value}</div>
+            <div className="mt-1 text-xs text-muted-foreground">{s.hint}</div>
+          </motion.div>
         ))}
       </div>
 
-      <div className="mt-8">
-        <h2 className="mb-3 font-display text-lg font-bold">Recent analyses</h2>
-        {items.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
-            Nothing yet. Run your first analysis to see results here.
-          </div>
-        ) : (
-          <div className="grid gap-3">
-            {items.slice(0, 6).map((a) => (
-              <div key={a.id} className="flex items-center justify-between rounded-xl border border-border bg-card p-4">
-                <div>
-                  <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">{a.kind.replace("_", " ")}</div>
-                  <div className="font-medium">{a.title || "Untitled"}</div>
-                </div>
-                {a.score != null && <div className="font-display text-2xl font-bold text-primary">{a.score}</div>}
-              </div>
-            ))}
-          </div>
-        )}
+      <h2 className="mb-4 mt-10 text-lg font-semibold">Quick actions</h2>
+      <div className="grid gap-4 md:grid-cols-3">
+        {quickActions.map((a) => (
+          <Link key={a.title} to={a.to} className="surface-card group flex flex-col p-6 transition-all hover:-translate-y-0.5 hover:shadow-elegant">
+            <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <a.icon className="h-5 w-5" />
+            </div>
+            <h3 className="font-semibold">{a.title}</h3>
+            <p className="mt-1 flex-1 text-sm text-muted-foreground">{a.desc}</p>
+            <div className="mt-4 inline-flex items-center text-sm font-medium text-primary">
+              Open <ArrowRight className="ml-1 h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+            </div>
+          </Link>
+        ))}
       </div>
     </div>
   );

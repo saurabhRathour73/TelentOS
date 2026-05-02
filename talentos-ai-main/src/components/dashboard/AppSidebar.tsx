@@ -1,107 +1,141 @@
+import { NavLink, useLocation } from "react-router-dom";
+import {
+  LayoutDashboard, FileText, Target, XCircle, Building2, Briefcase, Brain,
+  TrendingUp, DollarSign, BarChart3, Linkedin, Github, Code2, Globe,
+  Sparkles as SparklesIcon, Wrench, Shield, Rocket, Map, GraduationCap, Settings, LogOut
+} from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter, useSidebar,
 } from "@/components/ui/sidebar";
-import {
-  LayoutDashboard, FileText, Gauge, Ban, Building2, Briefcase, Brain, TrendingUp, DollarSign,
-  BarChart3, Linkedin, Github, Code2, Globe, Sparkles, Layers, UserCheck, Rocket, Map, GraduationCap, Settings, LogOut,
-} from "lucide-react";
-import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 
-const main = [
-  { to: "/dashboard", title: "Overview", icon: LayoutDashboard },
-];
-const analyze = [
-  { to: "/dashboard/resume", title: "Resume Analyzer", icon: FileText },
-  { to: "/dashboard/ats", title: "ATS Score", icon: Gauge },
-  { to: "/dashboard/role-match", title: "Dream Role Match", icon: Building2 },
-  { to: "/dashboard/roadmap", title: "30/60/90 Roadmap", icon: Map },
-];
-const soon = [
-  { to: "/dashboard/rejection", title: "Resume Rejection", icon: Ban },
-  { to: "/dashboard/skill-gap", title: "Skill Gap", icon: Brain },
-  { to: "/dashboard/hiring-probability", title: "Hiring Probability", icon: UserCheck },
-  { to: "/dashboard/salary", title: "Salary Trends", icon: DollarSign },
-  { to: "/dashboard/market", title: "Market Trends", icon: TrendingUp },
-  { to: "/dashboard/linkedin", title: "LinkedIn Analyzer", icon: Linkedin },
-  { to: "/dashboard/github", title: "GitHub Analyzer", icon: Github },
-  { to: "/dashboard/leetcode", title: "LeetCode Analyzer", icon: Code2 },
-  { to: "/dashboard/portfolio", title: "Portfolio Analyzer", icon: Globe },
-  { to: "/dashboard/tech-presence", title: "Tech Presence", icon: BarChart3 },
-  { to: "/dashboard/project-strength", title: "Project Strength", icon: Layers },
-  { to: "/dashboard/recruiter-sim", title: "Recruiter Simulation", icon: Briefcase },
-  { to: "/dashboard/strong-projects", title: "Strong Projects", icon: Rocket },
-  { to: "/dashboard/courses", title: "Courses", icon: GraduationCap },
+const groups = [
+  {
+    label: "Workspace",
+    items: [
+      { title: "Overview", url: "/dashboard", icon: LayoutDashboard, end: true },
+    ],
+  },
+  {
+    label: "Resume",
+    items: [
+      { title: "Resume Analyzer", url: "/dashboard/resume", icon: FileText },
+      { title: "ATS Score", url: "/dashboard/ats", icon: Target },
+      { title: "Rejection Insights", url: "/dashboard/rejection", icon: XCircle },
+    ],
+  },
+  {
+    label: "Career Match",
+    items: [
+      { title: "Dream Company", url: "/dashboard/dream-company", icon: Building2 },
+      { title: "Role Match", url: "/dashboard/role-match", icon: Briefcase },
+      { title: "Skill Gap", url: "/dashboard/skill-gap", icon: Brain },
+      { title: "Hiring Probability", url: "/dashboard/hiring", icon: TrendingUp },
+    ],
+  },
+  {
+    label: "Market",
+    items: [
+      { title: "Salary Trends", url: "/dashboard/salary", icon: DollarSign },
+      { title: "Market Trends", url: "/dashboard/market", icon: BarChart3 },
+    ],
+  },
+  {
+    label: "Tech Presence",
+    items: [
+      { title: "LinkedIn", url: "/dashboard/linkedin", icon: Linkedin },
+      { title: "GitHub", url: "/dashboard/github", icon: Github },
+      { title: "LeetCode", url: "/dashboard/leetcode", icon: Code2 },
+      { title: "Portfolio", url: "/dashboard/portfolio", icon: Globe },
+      { title: "Tech Presence", url: "/dashboard/presence", icon: SparklesIcon },
+    ],
+  },
+  {
+    label: "Build",
+    items: [
+      { title: "Project Strength", url: "/dashboard/projects", icon: Wrench },
+      { title: "Recruiter Sim", url: "/dashboard/recruiter", icon: Shield },
+      { title: "Strong Projects", url: "/dashboard/builder", icon: Rocket },
+      { title: "Roadmap", url: "/dashboard/roadmap", icon: Map },
+      { title: "Courses", url: "/dashboard/courses", icon: GraduationCap },
+    ],
+  },
 ];
 
-export default function AppSidebar() {
+export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const { pathname } = useLocation();
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   const nav = useNavigate();
-  const isActive = (p: string) => pathname === p;
 
-  const renderItems = (items: typeof main) =>
-    items.map((it) => (
-      <SidebarMenuItem key={it.to}>
-        <SidebarMenuButton asChild isActive={isActive(it.to)} tooltip={it.title}>
-          <NavLink to={it.to} end className="flex items-center gap-2">
-            <it.icon className="h-4 w-4" />
-            {!collapsed && <span>{it.title}</span>}
-          </NavLink>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
-    ));
+  const isActive = (url: string, end?: boolean) => end ? pathname === url : pathname.startsWith(url);
+
+  const onSignOut = async () => { await signOut(); nav("/"); };
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader className="px-3 py-3">
-        <NavLink to="/" className="flex items-center gap-2 font-display font-bold">
-          <span className="grid h-7 w-7 place-items-center rounded-lg bg-primary text-primary-foreground shadow-glow">
-            <Sparkles className="h-3.5 w-3.5" />
-          </span>
-          {!collapsed && <span>TalentOS</span>}
-        </NavLink>
+      <SidebarHeader className="border-b">
+        <div className="flex items-center gap-2 px-2 py-2">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+            <SparklesIcon className="h-4 w-4" />
+          </div>
+          {!collapsed && <span className="text-base font-semibold">TalentOS</span>}
+        </div>
       </SidebarHeader>
       <SidebarContent>
+        {groups.map((g) => (
+          <SidebarGroup key={g.label}>
+            {!collapsed && <SidebarGroupLabel>{g.label}</SidebarGroupLabel>}
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {g.items.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild isActive={isActive(item.url, (item as any).end)}>
+                      <NavLink to={item.url} end={(item as any).end} className="flex items-center gap-2">
+                        <item.icon className="h-4 w-4 shrink-0" />
+                        {!collapsed && <span>{item.title}</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
         <SidebarGroup>
-          {!collapsed && <SidebarGroupLabel>Workspace</SidebarGroupLabel>}
           <SidebarGroupContent>
-            <SidebarMenu>{renderItems(main)}</SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-        <SidebarGroup>
-          {!collapsed && <SidebarGroupLabel>Analyze</SidebarGroupLabel>}
-          <SidebarGroupContent>
-            <SidebarMenu>{renderItems(analyze)}</SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-        <SidebarGroup>
-          {!collapsed && <SidebarGroupLabel>Coming soon</SidebarGroupLabel>}
-          <SidebarGroupContent>
-            <SidebarMenu>{renderItems(soon)}</SidebarMenu>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <NavLink to="/dashboard/settings" className="flex items-center gap-2">
+                    <Settings className="h-4 w-4 shrink-0" />
+                    {!collapsed && <span>Settings</span>}
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="px-2 pb-3">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Settings">
-              <NavLink to="/dashboard/settings" className="flex items-center gap-2">
-                <Settings className="h-4 w-4" />
-                {!collapsed && <span>Settings</span>}
-              </NavLink>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton tooltip="Sign out" onClick={async () => { await signOut(); nav("/"); }}>
-              <LogOut className="h-4 w-4" />
-              {!collapsed && <span>Sign out</span>}
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+      <SidebarFooter className="border-t">
+        <div className="flex items-center gap-2 p-2">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+            {user?.email?.[0]?.toUpperCase() ?? "U"}
+          </div>
+          {!collapsed && (
+            <div className="flex min-w-0 flex-1 items-center justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-xs font-medium">{user?.email}</div>
+              </div>
+              <button onClick={onSignOut} className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground" aria-label="Sign out">
+                <LogOut className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
+        </div>
       </SidebarFooter>
     </Sidebar>
   );

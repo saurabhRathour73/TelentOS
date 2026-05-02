@@ -1,1 +1,13 @@
-project_id = "gjznyrapqczwxizdlwhe"
+project_id = "inyucciqbeifnvfqadec"
+
+[functions.analyze-resume]
+verify_jwt = false
+
+[functions.ai-module]
+verify_jwt = false
+
+[functions.auth-login]
+verify_jwt = false
+
+[functions.verify-user]
+verify_jwt = false

@@ -3,24 +3,26 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { AuthProvider } from "@/contexts/AuthContext";
-import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import { AuthProvider } from "@/hooks/useAuth";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+
 import Index from "./pages/Index";
-import FeaturesPage from "./pages/Features";
-import About from "./pages/About";
-import Contact from "./pages/Contact";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import ForgotPassword from "./pages/ForgotPassword";
+import EmailConfirm from "./pages/EmailConfirm";
 import NotFound from "./pages/NotFound";
+
 import DashboardLayout from "./components/dashboard/DashboardLayout";
 import Overview from "./pages/dashboard/Overview";
 import ResumeAnalyzer from "./pages/dashboard/ResumeAnalyzer";
-import AtsScore from "./pages/dashboard/AtsScore";
-import RoleMatch from "./pages/dashboard/RoleMatch";
-import Roadmap from "./pages/dashboard/Roadmap";
-import ComingSoon from "./pages/dashboard/ComingSoon";
-import Settings from "./pages/dashboard/Settings";
+import DreamCompany from "./pages/dashboard/DreamCompany";
+import RoadmapPage from "./pages/dashboard/Roadmap";
+import {
+  ATSScore, Rejection, RoleMatch, SkillGap, HiringProbability, SalaryTrends, MarketTrends,
+  LinkedInAnalyzer, GitHubAnalyzer, LeetCodeAnalyzer, PortfolioAnalyzer, TechPresence,
+  ProjectStrength, RecruiterSimulation, StrongProjects, Courses, Settings as SettingsPage,
+} from "./pages/dashboard/_modules";
 
 const queryClient = new QueryClient();
 
@@ -33,27 +35,32 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="/features" element={<FeaturesPage />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/contact" element={<Contact />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+            <Route path="/auth/callback" element={<EmailConfirm />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <DashboardLayout />
-                </ProtectedRoute>
-              }
-            >
+            <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
               <Route index element={<Overview />} />
               <Route path="resume" element={<ResumeAnalyzer />} />
-              <Route path="ats" element={<AtsScore />} />
+              <Route path="ats" element={<ATSScore />} />
+              <Route path="rejection" element={<Rejection />} />
+              <Route path="dream-company" element={<DreamCompany />} />
               <Route path="role-match" element={<RoleMatch />} />
-              <Route path="roadmap" element={<Roadmap />} />
-              <Route path="settings" element={<Settings />} />
-              <Route path="*" element={<ComingSoon />} />
+              <Route path="skill-gap" element={<SkillGap />} />
+              <Route path="hiring" element={<HiringProbability />} />
+              <Route path="salary" element={<SalaryTrends />} />
+              <Route path="market" element={<MarketTrends />} />
+              <Route path="linkedin" element={<LinkedInAnalyzer />} />
+              <Route path="github" element={<GitHubAnalyzer />} />
+              <Route path="leetcode" element={<LeetCodeAnalyzer />} />
+              <Route path="portfolio" element={<PortfolioAnalyzer />} />
+              <Route path="presence" element={<TechPresence />} />
+              <Route path="projects" element={<ProjectStrength />} />
+              <Route path="recruiter" element={<RecruiterSimulation />} />
+              <Route path="builder" element={<StrongProjects />} />
+              <Route path="roadmap" element={<RoadmapPage />} />
+              <Route path="courses" element={<Courses />} />
+              <Route path="settings" element={<SettingsPage />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
